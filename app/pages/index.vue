@@ -1,6 +1,11 @@
 <script setup lang="ts">
 const { loggedIn } = useUserSession()
 
+useSeoMeta({
+  title: 'Nuxt Studio SSO',
+  description: 'A centralized OAuth server that enables seamless single sign-on across all your Nuxt Studio-powered websites.',
+})
+
 definePageMeta({
   layout: false,
 })

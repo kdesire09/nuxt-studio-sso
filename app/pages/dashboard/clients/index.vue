@@ -9,6 +9,11 @@ interface OAuthClient {
   createdAt: string
 }
 
+useSeoMeta({
+  title: 'OAuth Clients - Nuxt Studio SSO',
+  description: 'Manage your registered OAuth client applications.',
+})
+
 definePageMeta({
   middleware: 'auth',
 })
@@ -260,11 +265,11 @@ async function deleteClient(id: string) {
 
             <div class="space-y-3">
               <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Client ID</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">STUDIO_SSO_CLIENT_ID</label>
                 <UInput :model-value="createdClientId" readonly class="font-mono" />
               </div>
               <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Client Secret</label>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">STUDIO_SSO_CLIENT_SECRET</label>
                 <div class="flex gap-2">
                   <UInput :model-value="createdSecret" readonly class="font-mono flex-1" type="password" />
                   <UButton

@@ -9,6 +9,11 @@ interface OAuthClient {
   createdAt: string
 }
 
+useSeoMeta({
+  title: 'Edit Client - Nuxt Studio SSO',
+  description: 'Edit OAuth client settings.',
+})
+
 definePageMeta({
   middleware: 'auth',
 })
@@ -242,7 +247,7 @@ function closeSecretModal() {
               description="This secret will only be shown once. Make sure to copy it now."
             />
             <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Client Secret</label>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">STUDIO_SSO_CLIENT_SECRET</label>
               <div class="mt-1 flex gap-2">
                 <UInput :model-value="newSecret" readonly class="font-mono flex-1" />
                 <UButton

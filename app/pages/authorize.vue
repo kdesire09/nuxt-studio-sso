@@ -4,6 +4,11 @@ const pending = ref(false)
 
 const oauthRequest = computed(() => session.value?.oauthRequest)
 
+useSeoMeta({
+  title: 'Authorize - Nuxt Studio SSO',
+  description: 'Authorize an application to access your account.',
+})
+
 definePageMeta({
   middleware: 'auth',
   layout: false,

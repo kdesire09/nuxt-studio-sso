@@ -6,6 +6,11 @@ interface Website {
 
 const { user, clear } = useUserSession()
 
+useSeoMeta({
+  title: 'Dashboard - Nuxt Studio SSO',
+  description: 'Manage your OAuth clients and view connected websites.',
+})
+
 definePageMeta({
   middleware: 'auth',
 })

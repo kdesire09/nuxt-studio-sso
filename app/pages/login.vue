@@ -2,6 +2,11 @@
 const route = useRoute()
 const error = computed(() => route.query.error as string | undefined)
 
+useSeoMeta({
+  title: 'Sign In - Nuxt Studio SSO',
+  description: 'Sign in to manage your OAuth clients and access connected Nuxt Studio sites.',
+})
+
 definePageMeta({
   layout: false,
 })
