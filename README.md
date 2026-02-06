@@ -43,8 +43,7 @@ Instead of configuring GitHub OAuth on each Nuxt Studio site individually, this 
 | ORM | Drizzle ORM |
 | Auth | nuxt-auth-utils |
 | Token Format | JWT with RS256 |
-| UI | Nuxt UI v3 |
-| Deployment | Vercel + Turso (via NuxtHub) |
+| UI | Nuxt UI |
 
 ## Quick Start
 

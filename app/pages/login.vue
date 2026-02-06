@@ -9,7 +9,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4">
+  <div class="absolute inset-0 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-6">

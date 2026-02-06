@@ -110,7 +110,7 @@ const clientCount = computed(() => clients.value?.length || 0)
           :key="website.websiteUrl"
           :href="website.websiteUrl"
           target="_blank"
-          class="flex items-center gap-3 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary hover:shadow-md transition-all"
+          class="flex items-center gap-3 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-primary hover:shadow-md transition-all"
         >
           <div class="p-2 inline-flex bg-primary/10 rounded-lg shrink-0">
             <UIcon name="i-heroicons-globe-alt" class="size-5 text-primary" />
@@ -197,7 +197,7 @@ const clientCount = computed(() => clients.value?.length || 0)
     </div>
 
     <!-- Quick links - Admin only -->
-    <div v-if="isAdmin" class="mt-8 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-gray-200 dark:border-gray-800">
+    <div v-if="isAdmin" class="mt-8 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
       <h3 class="text-sm font-medium text-muted mb-3">
         Quick Links
       </h3>
