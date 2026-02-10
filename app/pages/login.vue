@@ -15,10 +15,10 @@ useSeoMeta({
         <NuxtLink to="/" class="inline-flex items-center gap-2 mb-6">
           <UIcon name="i-heroicons-shield-check" class="size-10 text-primary" />
         </NuxtLink>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+        <h1 class="text-2xl font-bold text-highlighted">
           Sign in to Nuxt Studio
         </h1>
-        <p class="text-neutral-600 dark:text-neutral-400 mt-2">
+        <p class="text-muted mt-2">
           Access all your connected websites with a single account
         </p>
       </div>
@@ -49,7 +49,7 @@ useSeoMeta({
         </UButton>
       </UCard>
 
-      <p class="text-center text-xs text-neutral-400 dark:text-neutral-500 mt-6">
+      <p class="text-center text-xs text-dimmed mt-6">
         Powered by <NuxtLink
           to="https://github.com/nuxt-content/nuxt-studio-sso"
           class="underline underline-offset-2 hover:text-primary"

@@ -100,7 +100,7 @@ async function deleteClient(id: string) {
     <!-- Page header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+        <h1 class="text-2xl font-bold text-highlighted">
           OAuth Clients
         </h1>
         <p class="text-sm text-muted mt-1">
@@ -132,14 +132,14 @@ async function deleteClient(id: string) {
               </div>
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
-                  <h3 class="font-semibold text-neutral-900 dark:text-white truncate">
+                  <h3 class="font-semibold text-highlighted truncate">
                     {{ client.name }}
                   </h3>
                   <UBadge
                     v-if="client.isActive"
                     color="success"
                     variant="subtle"
-                    size="xs"
+                    size="sm"
                   >
                     Active
                   </UBadge>
@@ -147,7 +147,7 @@ async function deleteClient(id: string) {
                     v-else
                     color="error"
                     variant="subtle"
-                    size="xs"
+                    size="sm"
                   >
                     Inactive
                   </UBadge>
@@ -170,7 +170,7 @@ async function deleteClient(id: string) {
                 color="neutral"
                 square
               />
-              <p v-if="client.previewUrlPattern" class="text-xs text-neutral-400 dark:text-neutral-500 truncate">
+              <p v-if="client.previewUrlPattern" class="text-xs text-dimmed truncate">
                 Preview: {{ client.previewUrlPattern }}
               </p>
             </div>
@@ -199,96 +199,82 @@ async function deleteClient(id: string) {
     </div>
 
     <!-- Create Modal -->
-    <UModal v-model:open="showCreateModal">
-      <template #content>
-        <UCard>
-          <template #header>
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-3">
-                <div class="p-2 inline-flex shrink-0 bg-primary/10 rounded-lg">
-                  <UIcon name="i-heroicons-plus" class="size-5 text-primary" />
-                </div>
-                <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
-                  {{ createdSecret ? 'Client Created Successfully' : 'Create New Client' }}
-                </h2>
-              </div>
+    <UModal
+      v-model:open="showCreateModal"
+      :title="createdSecret ? 'Client Created Successfully' : 'Create New Client'"
+      @close="closeModal"
+    >
+      <template #body>
+        <!-- Success state -->
+        <div v-if="createdSecret" class="space-y-4">
+          <UAlert
+            color="warning"
+            icon="i-heroicons-exclamation-triangle"
+            title="Save your client secret"
+            description="This secret will only be shown once. Make sure to copy and store it securely."
+          />
+
+          <UFormField label="STUDIO_SSO_CLIENT_ID">
+            <UInput :model-value="createdClientId" readonly class="font-mono" />
+          </UFormField>
+
+          <UFormField label="STUDIO_SSO_CLIENT_SECRET">
+            <div class="flex gap-2">
+              <UInput
+                :model-value="createdSecret"
+                readonly
+                class="font-mono flex-1"
+                type="password"
+              />
               <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-heroicons-x-mark"
-                @click="closeModal"
+                :icon="copied ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+                :color="copied ? 'success' : 'neutral'"
+                variant="soft"
+                @click="copySecret"
               />
             </div>
-          </template>
+          </UFormField>
+        </div>
 
-          <!-- Success state -->
-          <div v-if="createdSecret" class="space-y-4">
-            <UAlert
-              color="warning"
-              icon="i-heroicons-exclamation-triangle"
-              title="Save your client secret"
-              description="This secret will only be shown once. Make sure to copy and store it securely."
+        <!-- Create form -->
+        <form v-else class="space-y-4" @submit.prevent="createClient">
+          <UFormField label="Client Name" required>
+            <UInput v-model="newClient.name" placeholder="My Nuxt Studio Site" class="w-full" />
+          </UFormField>
+
+          <UFormField label="Website URL" description="The callback path will be added automatically." required>
+            <UInput
+              v-model="newClient.websiteUrl"
+              placeholder="https://docs.example.com"
+              type="url"
+              class="w-full"
             />
+          </UFormField>
 
-            <UFormField label="STUDIO_SSO_CLIENT_ID">
-              <UInput :model-value="createdClientId" readonly class="font-mono" />
-            </UFormField>
+          <UFormField label="Preview URL Pattern" description="Use * as wildcard for preview deployments." hint="Optional">
+            <UInput
+              v-model="newClient.previewUrlPattern"
+              placeholder="https://my-docs-*.vercel.app"
+              class="w-full"
+            />
+          </UFormField>
+        </form>
+      </template>
 
-            <UFormField label="STUDIO_SSO_CLIENT_SECRET">
-              <div class="flex gap-2">
-                <UInput
-                  :model-value="createdSecret"
-                  readonly
-                  class="font-mono flex-1"
-                  type="password"
-                />
-                <UButton
-                  :icon="copied ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
-                  :color="copied ? 'success' : 'neutral'"
-                  variant="soft"
-                  @click="copySecret"
-                />
-              </div>
-            </UFormField>
-
-            <UButton block @click="closeModal">
-              Done
-            </UButton>
-          </div>
-
-          <!-- Create form -->
-          <form v-else class="space-y-4" @submit.prevent="createClient">
-            <UFormField label="Client Name" required>
-              <UInput v-model="newClient.name" placeholder="My Nuxt Studio Site" class="w-full" />
-            </UFormField>
-
-            <UFormField label="Website URL" description="The callback path will be added automatically." required>
-              <UInput
-                v-model="newClient.websiteUrl"
-                placeholder="https://docs.example.com"
-                type="url"
-                class="w-full"
-              />
-            </UFormField>
-
-            <UFormField label="Preview URL Pattern" description="Use * as wildcard for preview deployments." hint="Optional">
-              <UInput
-                v-model="newClient.previewUrlPattern"
-                placeholder="https://my-docs-*.vercel.app"
-                class="w-full"
-              />
-            </UFormField>
-
-            <div class="flex gap-2 justify-end pt-2">
-              <UButton color="neutral" variant="outline" @click="closeModal">
-                Cancel
-              </UButton>
-              <UButton type="submit" :loading="creating">
-                Create Client
-              </UButton>
-            </div>
-          </form>
-        </UCard>
+      <template #footer>
+        <template v-if="createdSecret">
+          <UButton block @click="closeModal">
+            Done
+          </UButton>
+        </template>
+        <template v-else>
+          <UButton color="neutral" variant="outline" @click="closeModal">
+            Cancel
+          </UButton>
+          <UButton :loading="creating" @click="createClient">
+            Create Client
+          </UButton>
+        </template>
       </template>
     </UModal>
   </div>

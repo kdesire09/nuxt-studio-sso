@@ -44,19 +44,19 @@ if (!oauthRequest.value) {
       <div class="space-y-6">
         <!-- App requesting access -->
         <div class="text-center">
-          <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <UIcon name="i-heroicons-globe-alt" class="size-8 text-neutral-500" />
+          <div class="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-heroicons-globe-alt" class="size-8 text-muted" />
           </div>
-          <h1 class="text-xl font-bold text-neutral-900 dark:text-white">
+          <h1 class="text-xl font-bold text-highlighted">
             {{ oauthRequest.clientName || 'An application' }}
           </h1>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <p class="text-sm text-muted mt-1">
             wants to access your account
           </p>
         </div>
 
         <!-- User card -->
-        <div class="flex items-center gap-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700">
+        <div class="flex items-center gap-4 p-4 bg-muted rounded-xl border border-default">
           <UUser
             :name="user?.name"
             :description="user?.email"
@@ -64,12 +64,12 @@ if (!oauthRequest.value) {
             size="lg"
             class="flex-1 min-w-0"
           />
-          <UIcon name="i-heroicons-check-badge" class="size-6 text-green-500 shrink-0" />
+          <UIcon name="i-heroicons-check-badge" class="size-6 text-success shrink-0" />
         </div>
 
         <!-- Permissions -->
-        <div class="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 border border-neutral-200 dark:border-neutral-700">
-          <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
+        <div class="bg-muted rounded-xl p-4 border border-default">
+          <p class="text-sm font-medium text-toned mb-3">
             This will allow the application to:
           </p>
           <ul class="space-y-2">
@@ -104,7 +104,7 @@ if (!oauthRequest.value) {
       </div>
 
       <template #footer>
-        <p class="text-xs text-center text-neutral-500 dark:text-neutral-400">
+        <p class="text-xs text-center text-muted">
           Make sure you trust this application before authorizing access.
         </p>
       </template>
@@ -113,13 +113,13 @@ if (!oauthRequest.value) {
     <!-- No request state -->
     <UCard v-else class="shadow-xl">
       <div class="text-center py-4">
-        <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <UIcon name="i-heroicons-question-mark-circle" class="size-8 text-neutral-400" />
+        <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <UIcon name="i-heroicons-question-mark-circle" class="size-8 text-dimmed" />
         </div>
-        <h2 class="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
+        <h2 class="text-lg font-semibold text-highlighted mb-2">
           No Authorization Request
         </h2>
-        <p class="text-neutral-500 dark:text-neutral-400 mb-6">
+        <p class="text-muted mb-6">
           There's no pending authorization request.
         </p>
         <UButton to="/dashboard">

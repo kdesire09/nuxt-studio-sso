@@ -98,8 +98,11 @@ function closeSecretModal() {
   newSecret.value = null
 }
 
+const copied = ref(false)
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text)
+  copied.value = true
+  setTimeout(() => copied.value = false, 2000)
 }
 
 async function deleteClient() {
@@ -121,7 +124,7 @@ async function deleteClient() {
         variant="ghost"
         icon="i-heroicons-arrow-left"
       />
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+      <h1 class="text-2xl font-bold text-highlighted">
         Edit Client
       </h1>
     </div>
@@ -147,9 +150,10 @@ async function deleteClient() {
             <div class="flex gap-2">
               <UInput :model-value="client.id" readonly class="font-mono flex-1" />
               <UButton
-                icon="i-heroicons-clipboard-document"
-                color="neutral"
+                :icon="copied ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                :color="copied ? 'success' : 'neutral'"
                 variant="outline"
+                :class="{ 'cursor-copy': !copied }"
                 @click="copyToClipboard(client.id)"
               />
             </div>
@@ -236,43 +240,29 @@ async function deleteClient() {
       </UCard>
     </div>
 
-    <UModal v-model:open="showSecretModal">
-      <template #content>
-        <UCard>
-          <template #header>
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-semibold">
-                New Client Secret
-              </h2>
+    <UModal v-model:open="showSecretModal" title="New Client Secret" @close="closeSecretModal">
+      <template #body>
+        <div class="space-y-4">
+          <UAlert
+            color="warning"
+            title="Save your client secret"
+            description="This secret will only be shown once. Make sure to copy it now."
+          />
+          <UFormField label="STUDIO_SSO_CLIENT_SECRET">
+            <div class="flex gap-2">
+              <UInput :model-value="newSecret" readonly class="font-mono flex-1" />
               <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-heroicons-x-mark"
-                @click="closeSecretModal"
+                icon="i-heroicons-clipboard-document"
+                @click="copyToClipboard(newSecret!)"
               />
             </div>
-          </template>
-
-          <div class="space-y-4">
-            <UAlert
-              color="warning"
-              title="Save your client secret"
-              description="This secret will only be shown once. Make sure to copy it now."
-            />
-            <UFormField label="STUDIO_SSO_CLIENT_SECRET">
-              <div class="flex gap-2">
-                <UInput :model-value="newSecret" readonly class="font-mono flex-1" />
-                <UButton
-                  icon="i-heroicons-clipboard-document"
-                  @click="copyToClipboard(newSecret!)"
-                />
-              </div>
-            </UFormField>
-            <UButton block @click="closeSecretModal">
-              Done
-            </UButton>
-          </div>
-        </UCard>
+          </UFormField>
+        </div>
+      </template>
+      <template #footer>
+        <UButton block @click="closeSecretModal">
+          Done
+        </UButton>
       </template>
     </UModal>
   </div>

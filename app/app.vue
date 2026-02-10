@@ -49,9 +49,9 @@ const navItems = computed<NavigationMenuItem[]>(() => {
 
         <UDropdownMenu
           v-if="user"
-          :items="[[
+          :items="[
             { label: 'Sign out', icon: 'i-heroicons-arrow-right-on-rectangle', onSelect: logout }
-          ]]"
+          ]"
         >
           <UButton color="neutral" variant="ghost" class="gap-2">
             <UAvatar :src="user?.avatar ?? undefined" :alt="user?.name" size="2xs" />
