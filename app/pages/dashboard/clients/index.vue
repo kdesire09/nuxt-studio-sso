@@ -7,6 +7,7 @@ interface OAuthClient {
   callbackUrl: string
   isActive: boolean
   createdAt: string
+  ownerName: string | null
 }
 
 useSeoMeta({
@@ -170,8 +171,11 @@ async function deleteClient(id: string) {
                 color="neutral"
                 square
               />
-              <p v-if="client.previewUrlPattern" class="text-xs text-dimmed truncate">
+              <p v-if="client.previewUrlPattern" class="text-xs text-dimmed truncate px-1">
                 Preview: {{ client.previewUrlPattern }}
+              </p>
+              <p v-if="client.ownerName" class="text-xs text-dimmed px-1">
+                Created by {{ client.ownerName }}
               </p>
             </div>
           </div>
