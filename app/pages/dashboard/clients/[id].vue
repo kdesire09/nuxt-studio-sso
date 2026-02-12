@@ -41,6 +41,50 @@ const saving = ref(false)
 const showSecretModal = ref(false)
 const newSecret = ref<string | null>(null)
 const regenerating = ref(false)
+const copiedField = ref<string | null>(null)
+const ssoUrl = useRequestURL().origin
+
+// Form validation errors
+const errors = ref<{ name?: string, websiteUrl?: string, previewUrlPattern?: string }>({})
+
+function validateUrl(url: string, label: string): string | undefined {
+  try {
+    const parsed = new URL(url)
+    if (parsed.pathname !== '/' && parsed.pathname !== '') {
+      return `${label} should not include a path`
+    }
+  } catch {
+    return 'Invalid URL format'
+  }
+  if (!url.startsWith('https://') && !/^http:\/\/localhost(:\d+)?($|\/)/.test(url)) {
+    return 'Must use HTTPS (http://localhost allowed for development)'
+  }
+}
+
+function validateForm(): boolean {
+  const errs: typeof errors.value = {}
+
+  if (!editForm.value.name.trim()) {
+    errs.name = 'Client name is required'
+  }
+
+  if (!editForm.value.websiteUrl.trim()) {
+    errs.websiteUrl = 'Website URL is required'
+  } else {
+    const urlError = validateUrl(editForm.value.websiteUrl, 'Website URL')
+    if (urlError) errs.websiteUrl = urlError
+  }
+
+  if (editForm.value.previewUrlPattern.trim()) {
+    const pattern = editForm.value.previewUrlPattern
+    const testUrl = pattern.replace(/\*/g, 'placeholder')
+    const patternError = validateUrl(testUrl, 'Preview URL pattern')
+    if (patternError) errs.previewUrlPattern = patternError
+  }
+
+  errors.value = errs
+  return Object.keys(errs).length === 0
+}
 
 // Initialize form when client loads
 watch(client, (value) => {
@@ -55,6 +99,8 @@ watch(client, (value) => {
 }, { immediate: true })
 
 async function saveClient() {
+  if (!validateForm()) return
+
   saving.value = true
   try {
     await $fetch(`/api/clients/${clientId}`, {
@@ -74,22 +120,36 @@ async function saveClient() {
       color: 'success',
       icon: 'i-heroicons-check-circle'
     })
-  } catch (error) {
-    toast.add({
-      title: 'Failed to save',
-      description: 'Something went wrong while saving the client.',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-circle'
-    })
+  } catch (error: any) {
+    const message = error?.data?.message || 'Something went wrong while saving the client.'
+    // Map server errors to form fields
+    if (message.toLowerCase().includes('url')) {
+      errors.value = { websiteUrl: message }
+    } else if (message.toLowerCase().includes('name')) {
+      errors.value = { name: message }
+    } else {
+      toast.add({
+        title: 'Failed to save',
+        description: message,
+        color: 'error',
+        icon: 'i-heroicons-exclamation-circle'
+      })
+    }
   } finally {
     saving.value = false
   }
 }
 
+const confirm = useConfirmDialog()
+
 async function regenerateSecret() {
-  if (!confirm('Are you sure you want to regenerate the client secret? The old secret will no longer work.')) {
-    return
-  }
+  const confirmed = await confirm({
+    title: 'Regenerate secret',
+    description: 'Are you sure you want to regenerate the client secret? The old secret will no longer work.',
+    confirmLabel: 'Regenerate',
+    confirmColor: 'warning'
+  })
+  if (!confirmed) return
 
   regenerating.value = true
   try {
@@ -108,19 +168,27 @@ async function regenerateSecret() {
 function closeSecretModal() {
   showSecretModal.value = false
   newSecret.value = null
+  copiedField.value = null
 }
 
-const copied = ref(false)
-function copyToClipboard(text: string) {
+function copyToClipboard(text: string, field: string) {
   navigator.clipboard.writeText(text)
-  copied.value = true
-  setTimeout(() => copied.value = false, 2000)
+  copiedField.value = field
+  setTimeout(() => copiedField.value = null, 2000)
 }
+
+const envFormat = computed(() => {
+  if (!newSecret.value) return ''
+  return `STUDIO_SSO_URL=${ssoUrl}\nSTUDIO_SSO_CLIENT_ID=${clientId}\nSTUDIO_SSO_CLIENT_SECRET=${newSecret.value}`
+})
 
 async function deleteClient() {
-  if (!confirm('Are you sure you want to delete this client?')) {
-    return
-  }
+  const confirmed = await confirm({
+    title: 'Delete client',
+    description: 'Are you sure you want to delete this client? This will revoke all tokens and break any sites using it.',
+    confirmLabel: 'Delete'
+  })
+  if (!confirmed) return
   await $fetch(`/api/clients/${clientId}`, { method: 'DELETE' })
   navigateTo('/dashboard/clients')
 }
@@ -158,32 +226,108 @@ async function deleteClient() {
         </template>
 
         <form class="space-y-4" @submit.prevent="saveClient">
-          <UFormField label="Client ID">
-            <div class="flex gap-2">
-              <UInput :model-value="client.id" readonly class="font-mono flex-1" />
-              <UButton
-                :icon="copied ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
-                :color="copied ? 'success' : 'neutral'"
-                variant="outline"
-                :class="{ 'cursor-copy': !copied }"
-                @click="copyToClipboard(client.id)"
-              />
-            </div>
+          <UFormField>
+            <template #label>
+              <span class="flex items-center gap-1.5">
+                STUDIO_SSO_URL
+                <UButton
+                  :icon="copiedField === 'key-sso-url' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                  :color="copiedField === 'key-sso-url' ? 'success' : 'neutral'"
+                  variant="link"
+                  size="xs"
+                  class="-my-1"
+                  @click="copyToClipboard('STUDIO_SSO_URL', 'key-sso-url')"
+                />
+              </span>
+            </template>
+            <UInput
+              :model-value="ssoUrl"
+              readonly
+              class="font-mono w-full"
+              :ui="{ trailing: 'pr-0.5' }"
+            >
+              <template #trailing>
+                <UTooltip text="Copy to clipboard" :content="{ side: 'right' }">
+                  <UButton
+                    :color="copiedField === 'sso-url' ? 'success' : 'neutral'"
+                    variant="link"
+                    size="sm"
+                    :icon="copiedField === 'sso-url' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                    aria-label="Copy to clipboard"
+                    @click="copyToClipboard(ssoUrl, 'sso-url')"
+                  />
+                </UTooltip>
+              </template>
+            </UInput>
           </UFormField>
 
-          <UFormField label="Client Name" required>
-            <UInput v-model="editForm.name" class="w-full" />
+          <UFormField>
+            <template #label>
+              <span class="flex items-center gap-1.5">
+                STUDIO_SSO_CLIENT_ID
+                <UButton
+                  :icon="copiedField === 'key-client-id' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                  :color="copiedField === 'key-client-id' ? 'success' : 'neutral'"
+                  variant="link"
+                  size="xs"
+                  class="-my-1"
+                  @click="copyToClipboard('STUDIO_SSO_CLIENT_ID', 'key-client-id')"
+                />
+              </span>
+            </template>
+            <UInput
+              :model-value="client.id"
+              readonly
+              class="font-mono w-full"
+              :ui="{ trailing: 'pr-0.5' }"
+            >
+              <template #trailing>
+                <UTooltip text="Copy to clipboard" :content="{ side: 'right' }">
+                  <UButton
+                    :color="copiedField === 'client-id' ? 'success' : 'neutral'"
+                    variant="link"
+                    size="sm"
+                    :icon="copiedField === 'client-id' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                    aria-label="Copy to clipboard"
+                    @click="copyToClipboard(client.id, 'client-id')"
+                  />
+                </UTooltip>
+              </template>
+            </UInput>
           </UFormField>
 
-          <UFormField label="Website URL" description="The callback path will be added automatically." required>
-            <UInput v-model="editForm.websiteUrl" class="w-full" />
+          <UFormField label="Client Name" required :error="errors.name">
+            <UInput
+              v-model="editForm.name"
+              class="w-full"
+              @input="errors.name = undefined"
+            />
           </UFormField>
 
-          <UFormField label="Preview URL Pattern" description="Use * as wildcard for preview deployments." hint="Optional">
+          <UFormField
+            label="Website URL"
+            description="The callback path will be added automatically."
+            required
+            :error="errors.websiteUrl"
+          >
+            <UInput
+              v-model="editForm.websiteUrl"
+              class="w-full"
+              @input="errors.websiteUrl = undefined"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Preview URL Pattern"
+            description="Use * as wildcard for preview deployments."
+            hint="Optional"
+            :error="errors.previewUrlPattern"
+          >
             <UInput
               v-model="editForm.previewUrlPattern"
               placeholder="https://*.vercel.app"
               class="w-full"
+              @input="errors.previewUrlPattern = undefined"
             />
           </UFormField>
 
@@ -257,18 +401,135 @@ async function deleteClient() {
         <div class="space-y-4">
           <UAlert
             color="warning"
+            variant="subtle"
             title="Save your client secret"
             description="This secret will only be shown once. Make sure to copy it now."
           />
-          <UFormField label="STUDIO_SSO_CLIENT_SECRET">
-            <div class="flex gap-2">
-              <UInput :model-value="newSecret" readonly class="font-mono flex-1" />
+
+          <UFormField>
+            <template #label>
+              <span class="flex items-center gap-1.5">
+                STUDIO_SSO_URL
+                <UButton
+                  :icon="copiedField === 'modal-key-url' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                  :color="copiedField === 'modal-key-url' ? 'success' : 'neutral'"
+                  variant="link"
+                  size="xs"
+                  class="-my-1"
+                  @click="copyToClipboard('STUDIO_SSO_URL', 'modal-key-url')"
+                />
+              </span>
+            </template>
+            <UInput
+              :model-value="ssoUrl"
+              readonly
+              class="font-mono w-full"
+              :ui="{ trailing: 'pr-0.5' }"
+            >
+              <template #trailing>
+                <UTooltip text="Copy to clipboard" :content="{ side: 'right' }">
+                  <UButton
+                    :color="copiedField === 'modal-val-url' ? 'success' : 'neutral'"
+                    variant="link"
+                    size="sm"
+                    :icon="copiedField === 'modal-val-url' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                    aria-label="Copy to clipboard"
+                    @click="copyToClipboard(ssoUrl, 'modal-val-url')"
+                  />
+                </UTooltip>
+              </template>
+            </UInput>
+          </UFormField>
+
+          <UFormField>
+            <template #label>
+              <span class="flex items-center gap-1.5">
+                STUDIO_SSO_CLIENT_ID
+                <UButton
+                  :icon="copiedField === 'key-id' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                  :color="copiedField === 'key-id' ? 'success' : 'neutral'"
+                  variant="link"
+                  size="xs"
+                  class="-my-1"
+                  @click="copyToClipboard('STUDIO_SSO_CLIENT_ID', 'key-id')"
+                />
+              </span>
+            </template>
+            <UInput
+              :model-value="clientId"
+              readonly
+              class="font-mono w-full"
+              :ui="{ trailing: 'pr-0.5' }"
+            >
+              <template #trailing>
+                <UTooltip text="Copy to clipboard" :content="{ side: 'right' }">
+                  <UButton
+                    :color="copiedField === 'val-id' ? 'success' : 'neutral'"
+                    variant="link"
+                    size="sm"
+                    :icon="copiedField === 'val-id' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                    aria-label="Copy to clipboard"
+                    @click="copyToClipboard(clientId, 'val-id')"
+                  />
+                </UTooltip>
+              </template>
+            </UInput>
+          </UFormField>
+
+          <UFormField>
+            <template #label>
+              <span class="flex items-center gap-1.5">
+                STUDIO_SSO_CLIENT_SECRET
+                <UButton
+                  :icon="copiedField === 'key-secret' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                  :color="copiedField === 'key-secret' ? 'success' : 'neutral'"
+                  variant="link"
+                  size="xs"
+                  class="-my-1"
+                  @click="copyToClipboard('STUDIO_SSO_CLIENT_SECRET', 'key-secret')"
+                />
+              </span>
+            </template>
+            <UInput
+              :model-value="newSecret"
+              readonly
+              class="font-mono w-full"
+              type="text"
+              :ui="{ trailing: 'pr-0.5' }"
+            >
+              <template #trailing>
+                <UTooltip text="Copy to clipboard" :content="{ side: 'right' }">
+                  <UButton
+                    :color="copiedField === 'val-secret' ? 'success' : 'neutral'"
+                    variant="link"
+                    size="sm"
+                    :icon="copiedField === 'val-secret' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                    aria-label="Copy to clipboard"
+                    @click="copyToClipboard(newSecret!, 'val-secret')"
+                  />
+                </UTooltip>
+              </template>
+            </UInput>
+          </UFormField>
+
+          <!-- Raw .env format -->
+          <USeparator />
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-muted">
+                .env format
+              </span>
               <UButton
-                icon="i-heroicons-clipboard-document"
-                @click="copyToClipboard(newSecret!)"
+                :icon="copiedField === 'env' ? 'i-lucide-clipboard-check' : 'i-lucide-clipboard'"
+                :color="copiedField === 'env' ? 'success' : 'neutral'"
+                variant="ghost"
+                size="xs"
+                :label="copiedField === 'env' ? 'Copied!' : 'Copy all'"
+                @click="copyToClipboard(envFormat, 'env')"
               />
             </div>
-          </UFormField>
+            <pre class="text-xs font-mono bg-elevated rounded-lg p-3 overflow-x-auto select-all">{{ envFormat }}</pre>
+          </div>
         </div>
       </template>
       <template #footer>
